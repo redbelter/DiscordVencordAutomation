@@ -2,6 +2,7 @@ Accessibility - Unknown
 Account - Unknown
 AccountPanelServerProfile - Unknown
 Activity - Unknown
+AdriWonderland - Unknown
 Alphy - Unknown
 AlwaysAnimate - Unknown
 AlwaysExpandRoles - Unknown
@@ -9,6 +10,7 @@ AlwaysTrust - Unknown
 AnonymiseFileNames - Unknown
 Appearance - Unknown
 Arissaa - Unknown
+Aurora - Unknown
 AutoDNDWhilePlaying - Unknown
 Avatar - Unknown
 BetterFolders - Unknown
@@ -60,6 +62,7 @@ Eleanese - Unknown
 Experience - Unknown
 Experiments - Unknown
 ExpressionCloner - Unknown
+Eyedress - Unknown
 F8Break - Unknown
 FakeNitro - Unknown
 FakeProfileThemes - Unknown
@@ -70,11 +73,8 @@ FixImagesQuality - Unknown
 FixSpotifyEmbeds - Unknown
 FixYoutubeEmbeds - Unknown
 ForceOwnerCrown - Unknown
-Fortnite - Unknown
-Foxtrot - Unknown
 FriendInvites - Unknown
 Friends - Unknown
-Fristi - Unknown
 FullSearchContext - Unknown
 FullUserInChatbox - Unknown
 GameActivityToggle - Unknown
@@ -93,6 +93,7 @@ Inbox - Unknown
 IrcColors - Unknown
 KeepCurrentChannel - Unknown
 LoadingQuotes - Unknown
+Lobby - Unknown
 LovelyGhosty - Unknown
 Maximize - Unknown
 Maybe - Unknown
@@ -125,7 +126,6 @@ NotificationVolume - Unknown
 NoTrack - Unknown
 NoTypingAnimation - Unknown
 NoUnblockToJump - Unknown
-Numbani - Unknown
 OnePingPerDM - Unknown
 Online - Unknown
 OpenInApp - Unknown
@@ -198,6 +198,7 @@ USRBG - Unknown
 ValidReply - Unknown
 ValidUser - Unknown
 Valorant - Unknown
+VALORANT - Unknown
 VcNarrator - Unknown
 Vencord - Unknown
 VencordToolbox - Unknown
@@ -207,6 +208,7 @@ VoiceChatDoubleClick - Unknown
 VoiceDownload - Unknown
 VoiceMessages - Unknown
 VolumeBooster - Unknown
+Warframe - Unknown
 WhoReacted - Unknown
 XSOverlay - Unknown
 YoutubeAdblock - Unknown

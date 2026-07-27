@@ -25,3 +25,4 @@ C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\refint\DiscordAu
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.pdb
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.genruntimeconfig.cache
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\ref\DiscordAutomation.dll
+C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.sourcelink.json
