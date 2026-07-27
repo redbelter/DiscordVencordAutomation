@@ -1,0 +1,6 @@
+=== Monitor Desktop Test ===
+Window Station: 0xC4
+Desktops in current window station:
+GetThreadDesktop failed: error 0
+Windows on current desktop:
+  EnumWindows failed: error 0
