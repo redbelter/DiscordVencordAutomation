@@ -65,12 +65,12 @@ class Program
             Console.WriteLine($"Discord started with PID {discordPID}");
             File.AppendAllText(logPath, $"Discord started with PID {discordPID}\n");
             
-            // Wait for Discord to load
-            Console.WriteLine("Waiting for Discord to load...");
-            File.AppendAllText(logPath, "Waiting for Discord to load...\n");
+            // Wait for Discord to load - wait for main window, not updater
+            Console.WriteLine("Waiting for Discord main window...");
+            File.AppendAllText(logPath, "Waiting for Discord main window...\n");
             
             bool discordLoaded = false;
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 60; i++)
             {
                 try
                 {
@@ -80,19 +80,24 @@ class Program
                     var automation = new FlaUI.UIA3.UIA3Automation();
                     var window = attachResult.GetMainWindow(automation);
                     
-                    if (window != null)
+                    if (window != null && window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
                     {
                         discordLoaded = true;
                         Console.WriteLine($"Discord loaded! Window: {window.Name}");
                         File.AppendAllText(logPath, $"Discord loaded! Window: {window.Name}\n");
                         break;
                     }
+                    else if (window != null)
+                    {
+                        Console.WriteLine($"Found window but not main Discord: {window.Name}");
+                        File.AppendAllText(logPath, $"Found window but not main Discord: {window.Name}\n");
+                    }
                 }
                 catch { }
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(500);
             }
             
-            if (!discordLoaded) { Console.WriteLine("Timeout waiting for Discord"); File.AppendAllText(logPath, "Timeout waiting for Discord\n"); return; }
+            if (!discordLoaded) { Console.WriteLine("Timeout waiting for Discord main window"); File.AppendAllText(logPath, "Timeout waiting for Discord main window\n"); return; }
             
             // Find User Settings and click it
             Console.WriteLine("Testing FlaUI...");
@@ -152,7 +157,7 @@ class Program
                             
                             Console.WriteLine("\n=== UI Tree After Plugins Clicked ===");
                             File.AppendAllText(logPath, "\n=== UI Tree After Plugins Clicked ===\n");
-                            DumpUI(window, 20);
+                            DumpUI(window, 30);
                             
                             // Enumerate plugins with state
                             Console.WriteLine("\n=== Enumerating Plugins ===");
