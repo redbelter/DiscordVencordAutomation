@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 class Program
 {
@@ -373,7 +374,10 @@ class Program
         try { automationId = element.AutomationId ?? "(empty)"; } catch { }
         try { controlType = element.ControlType?.ProgrammaticName ?? "(empty)"; } catch { }
         
-        var line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\">";
+        // Get available properties via reflection
+        var properties = GetAvailableProperties(element);
+        
+        var line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\" Properties=\"{properties}\">";
         Console.WriteLine(line);
         File.AppendAllText(logPath, line + "\n");
         
@@ -381,5 +385,31 @@ class Program
         {
             DumpUI(child, maxDepth, currentDepth + 1);
         }
+    }
+    
+    static string GetAvailableProperties(dynamic elem)
+    {
+        var props = new System.Collections.Generic.List<string>();
+        
+        try
+        {
+            var type = elem.GetType();
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (var field in fields)
+            {
+                try
+                {
+                    var val = field.GetValue(elem);
+                    if (val != null)
+                    {
+                        props.Add($"{field.Name}={val}");
+                    }
+                }
+                catch { }
+            }
+        }
+        catch { }
+        
+        return string.Join(",", props);
     }
 }
