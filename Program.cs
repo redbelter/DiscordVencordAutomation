@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using FlaUI.UIA3;
 
 class Program
 {
@@ -78,7 +79,7 @@ class Program
                     if (!Process.GetProcessesByName("Discord").Any()) { Console.WriteLine("Discord exited unexpectedly"); File.AppendAllText(logPath, "Discord exited unexpectedly\n"); return; }
                     
                     var attachResult = FlaUI.Core.Application.Attach(discordPID);
-                    var automation = new FlaUI.UIA3.UIA3Automation();
+                    var automation = new UIA3Automation();
                     var window = attachResult.GetMainWindow(automation);
                     
                     if (window != null && window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
@@ -107,7 +108,7 @@ class Program
             try
             {
                 var app = FlaUI.Core.Application.Attach(discordPID);
-                var automation = new FlaUI.UIA3.UIA3Automation();
+                var automation = new UIA3Automation();
                 var window = app.GetMainWindow(automation);
                 
                 if (window != null)
@@ -158,7 +159,7 @@ class Program
                             
                             Console.WriteLine("\n=== UI Tree After Plugins Clicked ===");
                             File.AppendAllText(logPath, "\n=== UI Tree After Plugins Clicked ===\n");
-                            DumpUI(window, 30);
+                            DumpUI(window, 50);
                             
                             // Enumerate plugins with state
                             Console.WriteLine("\n=== Enumerating Plugins ===");
@@ -192,7 +193,6 @@ class Program
                 string name = elem.Name ?? "";
                 if (!string.IsNullOrWhiteSpace(name) && IsPluginName(name))
                 {
-                    // Check if this element has children that might be checkboxes
                     var children = elem.FindAllChildren();
                     string state = CheckToggleState(elem);
                     
@@ -202,7 +202,6 @@ class Program
                         Console.WriteLine($"\nPlugin: {name} - {state}");
                         File.AppendAllText(logPath, $"\nPlugin: {name} - {state}\n");
                         
-                        // Debug: dump children for first 3 plugins
                         if (plugins.Count <= 3)
                         {
                             Console.WriteLine($"  Children count: {children.Count()}");
@@ -214,7 +213,6 @@ class Program
                                 string childName = child.Name ?? "(empty)";
                                 try
                                 {
-                                    // Try to access Toggle pattern via Patterns property
                                     dynamic patterns = child.@Patterns;
                                     dynamic toggle = patterns.Toggle;
                                     if (toggle != null)
@@ -231,7 +229,6 @@ class Program
                                 }
                                 catch (Exception ex)
                                 {
-                                    // Toggle pattern not found
                                     try
                                     {
                                         Console.WriteLine($"    Child {i}: Name='{childName}', Error: {ex.Message}");
@@ -265,7 +262,6 @@ class Program
         }
         catch { }
         
-        // Check children recursively
         try
         {
             return CheckToggleStateRecursive(elem, 0);
@@ -277,7 +273,7 @@ class Program
     
     static string CheckToggleStateRecursive(dynamic elem, int depth)
     {
-        if (depth > 10) return "Unknown";
+        if (depth > 20) return "Unknown";
         
         try
         {
@@ -308,7 +304,6 @@ class Program
                 }
                 catch { }
                 
-                // Recursively check children
                 string result = CheckToggleStateRecursive(child, depth + 1);
                 if (result != "Unknown")
                 {
@@ -324,7 +319,6 @@ class Program
     static bool IsPluginName(string text)
     {
         if (string.IsNullOrEmpty(text)) return false;
-        
         if (!char.IsUpper(text[0])) return false;
         
         bool hasLetter = false;
@@ -374,7 +368,6 @@ class Program
         try { automationId = element.AutomationId ?? "(empty)"; } catch { }
         try { controlType = element.ControlType?.ProgrammaticName ?? "(empty)"; } catch { }
         
-        // Get available properties via reflection
         var properties = GetAvailableProperties(element);
         
         var line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\" Properties=\"{properties}\">";
