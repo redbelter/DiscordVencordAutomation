@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using FlaUI.UIA3;
+using FlaUI.Core.Patterns;
 
 class Program
 {
@@ -79,7 +79,7 @@ class Program
                     if (!Process.GetProcessesByName("Discord").Any()) { Console.WriteLine("Discord exited unexpectedly"); File.AppendAllText(logPath, "Discord exited unexpectedly\n"); return; }
                     
                     var attachResult = FlaUI.Core.Application.Attach(discordPID);
-                    var automation = new UIA3Automation();
+                    var automation = new FlaUI.UIA3.UIA3Automation();
                     var window = attachResult.GetMainWindow(automation);
                     
                     if (window != null && window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
@@ -108,7 +108,7 @@ class Program
             try
             {
                 var app = FlaUI.Core.Application.Attach(discordPID);
-                var automation = new UIA3Automation();
+                var automation = new FlaUI.UIA3.UIA3Automation();
                 var window = app.GetMainWindow(automation);
                 
                 if (window != null)
@@ -202,7 +202,7 @@ class Program
                         Console.WriteLine($"\nPlugin: {name} - {state}");
                         File.AppendAllText(logPath, $"\nPlugin: {name} - {state}\n");
                         
-                        if (plugins.Count <= 3)
+                        if (plugins.Count <= 5)
                         {
                             Console.WriteLine($"  Children count: {children.Count()}");
                             File.AppendAllText(logPath, $"  Children count: {children.Count()}\n");
@@ -211,31 +211,10 @@ class Program
                             {
                                 i++;
                                 string childName = child.Name ?? "(empty)";
-                                try
-                                {
-                                    dynamic patterns = child.@Patterns;
-                                    dynamic toggle = patterns.Toggle;
-                                    if (toggle != null)
-                                    {
-                                        var toggleState = toggle.Current.ToggleState;
-                                        Console.WriteLine($"    Child {i}: Name='{childName}', ToggleState={toggleState}");
-                                        File.AppendAllText(logPath, $"    Child {i}: Name='{childName}', ToggleState={toggleState}\n");
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine($"    Child {i}: Name='{childName}', Toggle=null");
-                                        File.AppendAllText(logPath, $"    Child {i}: Name='{childName}', Toggle=null\n");
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    try
-                                    {
-                                        Console.WriteLine($"    Child {i}: Name='{childName}', Error: {ex.Message}");
-                                        File.AppendAllText(logPath, $"    Child {i}: Name='{childName}', Error: {ex.Message}\n");
-                                    }
-                                    catch { }
-                                }
+                                // Use TryGetPattern API for FlaUI 5
+                                string toggleState = GetToggleStateTryGetPattern(child);
+                                Console.WriteLine($"    Child {i}: Name='{childName}', ToggleState={toggleState}");
+                                File.AppendAllText(logPath, $"    Child {i}: Name='{childName}', ToggleState={toggleState}\n");
                             }
                         }
                     }
@@ -248,67 +227,65 @@ class Program
         File.AppendAllText(logPath, $"\n=== Found {plugins.Count} Plugins ===\n");
     }
     
-    static string CheckToggleState(dynamic elem)
+    static string GetToggleStateTryGetPattern(dynamic elem)
     {
         try
         {
-            dynamic patterns = elem.@Patterns;
-            dynamic toggle = patterns.Toggle;
-            if (toggle != null)
+            // Try to get TogglePattern using FlaUI 5 TryGetPattern API
+            var elemType = elem.GetType();
+            var method = elemType.GetMethod("TryGetPattern");
+            if (method != null)
             {
-                var state = toggle.Current.ToggleState;
-                return state.ToString();
+                var patternType = elemType.Assembly.GetType("FlaUI.Core.Patterns.ITogglePattern");
+                if (patternType != null)
+                {
+                    var patternInstance = Activator.CreateInstance(patternType);
+                    var parameters = new object[] { patternInstance };
+                    var result = method.Invoke(elem, parameters);
+                    
+                    if (result is bool && (bool)result)
+                    {
+                        var togglePattern = parameters[0];
+                        var currentProp = patternType.GetProperty("Current");
+                        if (currentProp != null)
+                        {
+                            var current = currentProp.GetValue(togglePattern);
+                            var toggleStateProp = current.GetType().GetProperty("ToggleState");
+                            if (toggleStateProp != null)
+                            {
+                                return toggleStateProp.GetValue(current).ToString();
+                            }
+                        }
+                    }
+                }
             }
-        }
-        catch { }
-        
-        try
-        {
-            return CheckToggleStateRecursive(elem, 0);
         }
         catch { }
         
         return "Unknown";
     }
     
+    static string CheckToggleState(dynamic elem)
+    {
+        return GetToggleStateTryGetPattern(elem);
+    }
+    
     static string CheckToggleStateRecursive(dynamic elem, int depth)
     {
         if (depth > 20) return "Unknown";
         
-        try
-        {
-            dynamic patterns = elem.@Patterns;
-            dynamic toggle = patterns.Toggle;
-            if (toggle != null)
-            {
-                var state = toggle.Current.ToggleState;
-                return state.ToString();
-            }
-        }
-        catch { }
+        string state = GetToggleStateTryGetPattern(elem);
+        if (state != "Unknown")
+            return state;
         
         try
         {
             var children = elem.FindAllChildren();
             foreach (var child in children)
             {
-                try
-                {
-                    dynamic patterns = child.@Patterns;
-                    dynamic toggle = patterns.Toggle;
-                    if (toggle != null)
-                    {
-                        var state = toggle.Current.ToggleState;
-                        return state.ToString();
-                    }
-                }
-                catch { }
-                
                 string result = CheckToggleStateRecursive(child, depth + 1);
                 if (result != "Unknown")
-                {
                     return result;
-                }
             }
         }
         catch { }
