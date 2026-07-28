@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Author>PLAYPC\red</Author>
-    <Description>Run Discord Vencord automation immediately</Description>
+    <Author>AutoBot</Author>
+    <Description>Run Discord Vencord automation</Description>
     <URI>\DiscordAutomation</URI>
   </RegistrationInfo>
   <Principals>
     <Principal id="Author">
-      <UserId>USER-SID-REMOVED</UserId>
+      <UserId>AutoBot</UserId>
       <LogonType>InteractiveToken</LogonType>
     </Principal>
   </Principals>
