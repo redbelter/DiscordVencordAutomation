@@ -34,6 +34,12 @@ jobs:
         DOTNET_CLI_TELEMETRY_OPTOUT: true
         DOTNET_NOLOGO: true
 
+    - name: Copy all files to publish folder
+      run: |
+        Copy-Item -Path "*.txt, *.xml, *.json" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "*.exe" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "bin/Release/net8.0-windows/*" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
+
     - name: Create ZIP Archive
       run: |
         Compress-Archive -Path ./publish/* -DestinationPath ./DiscordAutomation.zip -Force
@@ -49,11 +55,10 @@ jobs:
           ### Installation
           1. Download `DiscordAutomation.zip` below
           2. Extract to `C:\Users\red\Desktop\DiscordAutomation\`
-          3. Run `DiscordAutomation.exe` or `dotnet DiscordAutomation.dll`
+          3. Run `DiscordAutomation.exe`
           
           ### Requirements
           - Windows 10/11
-          - .NET 8.0 Runtime (included in Windows 10/11)
           - Discord installed at `C:\Users\red\AppData\Local\Discord`
           
           ### Usage
