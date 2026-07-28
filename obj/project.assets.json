@@ -903,6 +903,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0-windows": [
+      "FlaUI.Core >= 5.0.0",
       "FlaUI.UIA3 >= 5.0.0"
     ]
   },
@@ -958,6 +959,10 @@
         "framework": "net8.0-windows7.0",
         "targetAlias": "net8.0-windows",
         "dependencies": {
+          "FlaUI.Core": {
+            "target": "Package",
+            "version": "[5.0.0, )"
+          },
           "FlaUI.UIA3": {
             "target": "Package",
             "version": "[5.0.0, )"

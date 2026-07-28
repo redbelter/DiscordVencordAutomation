@@ -2,17 +2,38 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using FlaUI.Core.Patterns;
+using FlaUI.Core;
+using FlaUI.Core.AutomationElements;
+using FlaUI.UIA3;
 
+/// <summary>
+/// Discord Vencord Plugin Automation Tool
+/// 
+/// This tool automates the process of:
+/// 1. Launching Discord with proper retry logic (3 attempts, 60 seconds each)
+/// 2. Navigating to Settings → Plugins page
+/// 3. Enumerating Vencord plugins and their toggle states
+/// 4. Saving results to plugins_list.txt
+///
+/// Usage: Run as a standalone console application
+/// Output: 
+///   - flaui_output.txt: Detailed UI automation log
+///   - plugins_list.txt: List of detected plugins with status (on/off/unknown)
+/// </summary>
 class Program
 {
     static string logPath;
-    static int discordPID = 0;
     
-    static void Main()
+    static void Main(string[] args)
     {
+        // Configuration
         logPath = @"C:\Users\red\Desktop\DiscordAutomation\flaui_output.txt";
+        
+        // Clean up old log file
+        if (File.Exists(logPath))
+        {
+            File.WriteAllText(logPath, "");
+        }
         
         Console.WriteLine($"Starting with log at: {logPath}");
         Console.WriteLine($"Current PID: {Environment.ProcessId}");
@@ -20,169 +41,329 @@ class Program
         
         try
         {
+            // Initialize log file
             File.WriteAllText(logPath, "=== Discord Vencord Plugin Automation (FlaUI) ===\n");
             Console.WriteLine("File created!");
             
-            // Kill all Discord processes first
-            Console.WriteLine("Killing all Discord processes...");
-            File.AppendAllText(logPath, "Killing all Discord processes...\n");
-            foreach (var proc in Process.GetProcessesByName("Discord"))
+            // Step 1: Kill all existing Discord processes
+            KillAllDiscordProcesses();
+            
+            // Step 2: Launch Discord
+            var discordProcess = LaunchDiscord();
+            if (discordProcess == null)
             {
-                Console.WriteLine($"  Killing PID {proc.Id}");
-                File.AppendAllText(logPath, $"  Killing PID {proc.Id}\n");
-                try { proc.Kill(); proc.WaitForExit(5000); }
-                catch (Exception ex) { Console.WriteLine($"    Error: {ex.Message}"); File.AppendAllText(logPath, $"    Error: {ex.Message}\n"); }
-            }
-            System.Threading.Thread.Sleep(1000);
-            
-            // Launch Discord
-            Console.WriteLine("Launching Discord...");
-            File.AppendAllText(logPath, "Launching Discord...\n");
-            
-            string discordPath = @"C:\Users\red\AppData\Local\Discord";
-            string discordExe = Path.Combine(discordPath, "Discord.exe");
-            
-            if (!File.Exists(discordExe))
-            {
-                var appFolders = Directory.GetDirectories(discordPath).Where(d => d.Contains("app-")).ToArray();
-                if (appFolders.Length > 0)
-                {
-                    discordExe = Path.Combine(appFolders[0], "Discord.exe");
-                    Console.WriteLine($"Using app folder path: {discordExe}");
-                    File.AppendAllText(logPath, $"Using app folder path: {discordExe}\n");
-                }
-            }
-            
-            if (!File.Exists(discordExe))
-            {
-                Console.WriteLine($"Discord.exe not found at {discordExe}");
-                File.AppendAllText(logPath, $"Discord.exe not found at {discordExe}\n");
+                Console.WriteLine("Failed to launch Discord!");
                 return;
             }
             
-            var discordProcess = Process.Start(new ProcessStartInfo { FileName = discordExe, UseShellExecute = true });
-            if (discordProcess == null) { Console.WriteLine("Failed to start Discord!"); File.AppendAllText(logPath, "Failed to start Discord!\n"); return; }
+            // Step 3: Wait for Discord to load (with retry logic)
+            if (!WaitForDiscordLoad())
+            {
+                Console.WriteLine("Failed to load Discord after 3 attempts");
+                return;
+            }
             
-            discordPID = discordProcess.Id;
-            Console.WriteLine($"Discord started with PID {discordPID}");
-            File.AppendAllText(logPath, $"Discord started with PID {discordPID}\n");
+            // Step 4: Navigate to Plugins page and enumerate plugins
+            NavigateToPluginsAndEnumerate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FATAL ERROR: {ex.Message}");
+            File.WriteAllText(logPath, $"FATAL ERROR: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+    
+    /// <summary>
+    /// Kill all running Discord processes
+    /// </summary>
+    static void KillAllDiscordProcesses()
+    {
+        Console.WriteLine("Killing all Discord processes...");
+        File.AppendAllText(logPath, "Killing all Discord processes...\n");
+        
+        foreach (var proc in Process.GetProcessesByName("Discord"))
+        {
+            Console.WriteLine($"  Killing PID {proc.Id}");
+            File.AppendAllText(logPath, $"  Killing PID {proc.Id}\n");
+            try 
+            { 
+                proc.Kill(); 
+                proc.WaitForExit(5000); 
+            }
+            catch (Exception ex) 
+            { 
+                Console.WriteLine($"    Error: {ex.Message}"); 
+                File.AppendAllText(logPath, $"    Error: {ex.Message}\n"); 
+            }
+        }
+        System.Threading.Thread.Sleep(1000); // Wait for processes to fully terminate
+    }
+    
+    /// <summary>
+    /// Launch Discord from the latest app folder
+    /// </summary>
+    static Process LaunchDiscord()
+    {
+        Console.WriteLine("Launching Discord...");
+        File.AppendAllText(logPath, "Launching Discord...\n");
+        
+        string discordPath = @"C:\Users\red\AppData\Local\Discord";
+        string discordExe = Path.Combine(discordPath, "Discord.exe");
+        
+        // Find latest app folder if not at default location
+        if (!File.Exists(discordExe))
+        {
+            var appFolders = Directory.GetDirectories(discordPath).Where(d => d.Contains("app-")).ToArray();
+            if (appFolders.Length > 0)
+            {
+                discordExe = Path.Combine(appFolders[0], "Discord.exe");
+                Console.WriteLine($"Using app folder path: {discordExe}");
+                File.AppendAllText(logPath, $"Using app folder path: {discordExe}\n");
+            }
+        }
+        
+        if (!File.Exists(discordExe))
+        {
+            Console.WriteLine($"Discord.exe not found at {discordExe}");
+            File.AppendAllText(logPath, $"Discord.exe not found at {discordExe}\n");
+            return null;
+        }
+        
+        var process = Process.Start(new ProcessStartInfo { 
+            FileName = discordExe, 
+            UseShellExecute = true 
+        });
+        
+        if (process == null)
+        {
+            Console.WriteLine("Failed to start Discord!");
+            File.AppendAllText(logPath, "Failed to start Discord!\n");
+            return null;
+        }
+        
+        Console.WriteLine($"Discord started with PID {process.Id}");
+        File.AppendAllText(logPath, $"Discord started with PID {process.Id}\n");
+        return process;
+    }
+    
+    /// <summary>
+    /// Wait for Discord to fully load with retry logic
+    /// Max 3 attempts, 60 seconds (120 × 500ms) per attempt
+    /// </summary>
+    static bool WaitForDiscordLoad()
+    {
+        Console.WriteLine("Waiting for Discord main window...");
+        File.AppendAllText(logPath, "Waiting for Discord main window...\n");
+        
+        int launchAttempts = 0;
+        const int maxAttempts = 3;
+        const int maxWaitCycles = 120; // 120 × 500ms = 60 seconds
+        const int waitIntervalMs = 500;
+        
+        while (launchAttempts < maxAttempts)
+        {
+            launchAttempts++;
             
-            // Wait for Discord to load - wait for main window, not updater
-            Console.WriteLine("Waiting for Discord main window...");
-            File.AppendAllText(logPath, "Waiting for Discord main window...\n");
+            if (launchAttempts > 1)
+            {
+                Console.WriteLine($"Retry attempt {launchAttempts} for Discord...");
+                File.AppendAllText(logPath, $"Retry attempt {launchAttempts} for Discord...\n");
+                
+                // Kill existing processes before retry
+                foreach (var proc in Process.GetProcessesByName("Discord"))
+                {
+                    Console.WriteLine($"  Killing PID {proc.Id}");
+                    File.AppendAllText(logPath, $"  Killing PID {proc.Id}\n");
+                    try { proc.Kill(); proc.WaitForExit(5000); }
+                    catch (Exception ex) { Console.WriteLine($"    Error: {ex.Message}"); File.AppendAllText(logPath, $"    Error: {ex.Message}\n"); }
+                }
+                System.Threading.Thread.Sleep(1000);
+                
+                // Relaunch Discord
+                var retryProcess = LaunchDiscord();
+                if (retryProcess == null) continue;
+            }
             
-            bool discordLoaded = false;
-            for (int i = 0; i < 60; i++)
+            // Wait for Discord main window with timeout
+            for (int i = 0; i < maxWaitCycles; i++)
             {
                 try
                 {
-                    if (!Process.GetProcessesByName("Discord").Any()) { Console.WriteLine("Discord exited unexpectedly"); File.AppendAllText(logPath, "Discord exited unexpectedly\n"); return; }
-                    
-                    var attachResult = FlaUI.Core.Application.Attach(discordPID);
-                    var automation = new FlaUI.UIA3.UIA3Automation();
-                    var window = attachResult.GetMainWindow(automation);
-                    
-                    if (window != null && window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
+                    if (!Process.GetProcessesByName("Discord").Any())
                     {
-                        discordLoaded = true;
-                        Console.WriteLine($"Discord loaded! Window: {window.Name}");
-                        File.AppendAllText(logPath, $"Discord loaded! Window: {window.Name}\n");
+                        Console.WriteLine("Discord exited unexpectedly");
+                        File.AppendAllText(logPath, "Discord exited unexpectedly\n");
                         break;
                     }
-                    else if (window != null)
-                    {
-                        Console.WriteLine($"Found window but not main Discord: {window.Name}");
-                        File.AppendAllText(logPath, $"Found window but not main Discord: {window.Name}\n");
-                    }
-                }
-                catch { }
-                System.Threading.Thread.Sleep(500);
-            }
-            
-            if (!discordLoaded) { Console.WriteLine("Timeout waiting for Discord main window"); File.AppendAllText(logPath, "Timeout waiting for Discord main window\n"); return; }
-            
-            // Find User Settings and click it
-            Console.WriteLine("Testing FlaUI...");
-            File.AppendAllText(logPath, "Testing FlaUI...\n");
-            
-            try
-            {
-                var app = FlaUI.Core.Application.Attach(discordPID);
-                var automation = new FlaUI.UIA3.UIA3Automation();
-                var window = app.GetMainWindow(automation);
-                
-                if (window != null)
-                {
-                    Console.WriteLine($"FOUND WINDOW! Name: {window.Name}");
-                    File.AppendAllText(logPath, $"FOUND WINDOW! Name: {window.Name}\n");
                     
-                    Console.WriteLine("Searching for User Settings button...");
-                    File.AppendAllText(logPath, "Searching for User Settings button...\n");
-                    System.Threading.Thread.Sleep(5000);
+                    var automation = new UIA3Automation();
+                    var discordProcs = Process.GetProcessesByName("Discord")
+                        .Where(p => p.Id != Environment.ProcessId)
+                        .ToArray();
                     
-                    var settingsButton = window.FindFirstDescendant(cf => cf.ByName("User Settings"));
-                    int retryCount = 0;
-                    while (settingsButton == null && retryCount < 3)
+                    if (discordProcs.Length > 0)
                     {
-                        retryCount++;
-                        Console.WriteLine($"User Settings button not found (attempt {retryCount}), waiting...");
-                        File.AppendAllText(logPath, $"User Settings button not found (attempt {retryCount}), waiting...\n");
-                        System.Threading.Thread.Sleep(3000);
-                        settingsButton = window.FindFirstDescendant(cf => cf.ByName("User Settings"));
-                    }
-                    
-                    if (settingsButton != null)
-                    {
-                        Console.WriteLine($"FOUND User Settings button!");
-                        File.AppendAllText(logPath, $"FOUND User Settings button!\n");
-                        settingsButton.Click();
-                        File.AppendAllText(logPath, "Clicked User Settings button\n");
-                        System.Threading.Thread.Sleep(2000);
+                        var app = FlaUI.Core.Application.Attach(discordProcs[0].Id);
+                        var window = app.GetMainWindow(automation);
                         
-                        Console.WriteLine("\n=== UI Tree After User Settings Clicked ===");
-                        File.AppendAllText(logPath, "\n=== UI Tree After User Settings Clicked ===\n");
-                        DumpUI(window, 10);
-                        
-                        // Look for Plugins button
-                        Console.WriteLine("\n=== Looking for Plugins navigation button ===");
-                        File.AppendAllText(logPath, "\n=== Looking for Plugins navigation button ===\n");
-                        
-                        var pluginsButton = window.FindFirstDescendant(cf => cf.ByName("Plugins"));
-                        if (pluginsButton != null)
+                        if (window != null)
                         {
-                            Console.WriteLine("FOUND Plugins button!");
-                            File.AppendAllText(logPath, "FOUND Plugins button!\n");
-                            pluginsButton.Click();
-                            Console.WriteLine("Clicked Plugins button, waiting for Vencord plugins page...");
-                            File.AppendAllText(logPath, "Clicked Plugins button, waiting for Vencord plugins page...\n");
-                            System.Threading.Thread.Sleep(3000);
+                            Console.WriteLine($"Found window: '{window.Name}' | '{window.ControlType}'");
+                            File.AppendAllText(logPath, $"Found window: '{window.Name}' | '{window.ControlType}'\n");
                             
-                            Console.WriteLine("\n=== UI Tree After Plugins Clicked ===");
-                            File.AppendAllText(logPath, "\n=== UI Tree After Plugins Clicked ===\n");
-                            DumpUI(window, 50);
-                            
-                            // Enumerate plugins with state
-                            Console.WriteLine("\n=== Enumerating Plugins ===");
-                            File.AppendAllText(logPath, "\n=== Enumerating Plugins ===\n");
-                            EnumeratePlugins(window);
-                            SavePluginList();
+                            // Check if it's the main Discord window (not Updater)
+                            if (window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
+                            {
+                                Console.WriteLine($"Discord loaded! Window: {window.Name}");
+                                File.AppendAllText(logPath, $"Discord loaded! Window: {window.Name}\n");
+                                return true;
+                            }
                         }
-                        else { Console.WriteLine("Plugins button not found"); File.AppendAllText(logPath, "Plugins button not found\n"); DumpUI(window, 50); }
                     }
-                    else { Console.WriteLine("User Settings button not found after retries"); File.AppendAllText(logPath, "User Settings button not found after retries\n"); DumpUI(window, 50); }
+                    
+                    Console.WriteLine($"Waiting for Discord main window... (attempt {i})");
+                    File.AppendAllText(logPath, $"Waiting for Discord main window... (attempt {i})\n");
                 }
-                else { Console.WriteLine("No main window found"); File.AppendAllText(logPath, "No main window found\n"); }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception: {ex.Message}");
+                    File.AppendAllText(logPath, $"Exception: {ex.Message}\n");
+                }
+                
+                System.Threading.Thread.Sleep(waitIntervalMs);
             }
-            catch (Exception ex) { Console.WriteLine($"ERROR: {ex.Message}"); File.AppendAllText(logPath, $"ERROR: {ex.Message}\n{ex.StackTrace}\n"); }
             
-            Console.WriteLine("Done!");
-            File.AppendAllText(logPath, "Done!\n");
+            if (launchAttempts < maxAttempts)
+            {
+                Console.WriteLine("Discord did not load within timeout, restarting...");
+                File.AppendAllText(logPath, "Discord did not load within timeout, restarting...\n");
+            }
         }
-        catch (Exception ex) { Console.WriteLine($"FATAL ERROR: {ex.Message}"); File.WriteAllText(logPath, $"FATAL ERROR: {ex.Message}\n{ex.StackTrace}"); }
+        
+        Console.WriteLine("Timeout waiting for Discord main window after 3 attempts");
+        File.AppendAllText(logPath, "Timeout waiting for Discord main window after 3 attempts\n");
+        return false;
     }
     
-    static void EnumeratePlugins(dynamic window)
+    /// <summary>
+    /// Navigate to User Settings → Plugins and enumerate all plugins
+    /// </summary>
+    static void NavigateToPluginsAndEnumerate()
     {
+        Console.WriteLine("Testing FlaUI...");
+        File.AppendAllText(logPath, "Testing FlaUI...\n");
+        
+        try
+        {
+            var automation = new UIA3Automation();
+            var window = automation.GetDesktop().FindFirstDescendant(cf => cf.ByName("Discord")).AsWindow();
+            
+            if (window == null)
+            {
+                Console.WriteLine("No main window found");
+                File.AppendAllText(logPath, "No main window found\n");
+                return;
+            }
+            
+            Console.WriteLine($"FOUND WINDOW! Name: {window.Name}");
+            File.AppendAllText(logPath, $"FOUND WINDOW! Name: {window.Name}\n");
+            
+            // Click User Settings
+            ClickUserSettings(window);
+            
+            // Click Plugins button
+            ClickPluginsButton(window);
+            
+            // Enumerate plugins
+            EnumeratePlugins(window);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: {ex.Message}");
+            File.AppendAllText(logPath, $"ERROR: {ex.Message}\n{ex.StackTrace}\n");
+        }
+    }
+    
+    /// <summary>
+    /// Click the User Settings button in Discord's sidebar
+    /// </summary>
+    static void ClickUserSettings(AutomationElement window)
+    {
+        Console.WriteLine("Searching for User Settings button...");
+        File.AppendAllText(logPath, "Searching for User Settings button...\n");
+        System.Threading.Thread.Sleep(5000); // Wait for UI to stabilize
+        
+        var settingsButton = window.FindFirstDescendant(cf => cf.ByName("User Settings"));
+        int retryCount = 0;
+        
+        while (settingsButton == null && retryCount < 3)
+        {
+            retryCount++;
+            Console.WriteLine($"User Settings button not found (attempt {retryCount}), waiting...");
+            File.AppendAllText(logPath, $"User Settings button not found (attempt {retryCount}), waiting...\n");
+            System.Threading.Thread.Sleep(3000);
+            settingsButton = window.FindFirstDescendant(cf => cf.ByName("User Settings"));
+        }
+        
+        if (settingsButton != null)
+        {
+            Console.WriteLine("FOUND User Settings button!");
+            File.AppendAllText(logPath, "FOUND User Settings button!\n");
+            settingsButton.Click();
+            File.AppendAllText(logPath, "Clicked User Settings button\n");
+            System.Threading.Thread.Sleep(2000);
+            
+            Console.WriteLine("\n=== UI Tree After User Settings Clicked ===");
+            File.AppendAllText(logPath, "\n=== UI Tree After User Settings Clicked ===\n");
+            DumpUI(window, 10);
+        }
+        else
+        {
+            Console.WriteLine("User Settings button not found after retries");
+            File.AppendAllText(logPath, "User Settings button not found after retries\n");
+            DumpUI(window, 10);
+        }
+    }
+    
+    /// <summary>
+    /// Click the Plugins button in Discord's sidebar
+    /// </summary>
+    static void ClickPluginsButton(AutomationElement window)
+    {
+        Console.WriteLine("\n=== Looking for Plugins navigation button ===");
+        File.AppendAllText(logPath, "\n=== Looking for Plugins navigation button ===\n");
+        
+        var pluginsButton = window.FindFirstDescendant(cf => cf.ByName("Plugins"));
+        
+        if (pluginsButton != null)
+        {
+            Console.WriteLine("FOUND Plugins button!");
+            File.AppendAllText(logPath, "FOUND Plugins button!\n");
+            pluginsButton.Click();
+            Console.WriteLine("Clicked Plugins button, waiting for Vencord plugins page...");
+            File.AppendAllText(logPath, "Clicked Plugins button, waiting for Vencord plugins page...\n");
+            System.Threading.Thread.Sleep(3000);
+            
+            Console.WriteLine("\n=== UI Tree After Plugins Clicked ===");
+            File.AppendAllText(logPath, "\n=== UI Tree After Plugins Clicked ===\n");
+            DumpUI(window, 50);
+        }
+        else
+        {
+            Console.WriteLine("Plugins button not found");
+            File.AppendAllText(logPath, "Plugins button not found\n");
+            DumpUI(window, 50);
+        }
+    }
+    
+    /// <summary>
+    /// Enumerate all Vencord plugins and their toggle states
+    /// </summary>
+    static void EnumeratePlugins(AutomationElement window)
+    {
+        Console.WriteLine("\n=== Enumerating Plugins ===");
+        File.AppendAllText(logPath, "\n=== Enumerating Plugins ===\n");
+        
         var allElements = window.FindAllDescendants();
         var plugins = new System.Collections.Generic.Dictionary<string, string>();
         
@@ -191,108 +372,62 @@ class Program
             try
             {
                 string name = elem.Name ?? "";
-                if (!string.IsNullOrWhiteSpace(name) && IsPluginName(name))
+                
+                // Check if this element looks like a Vencord plugin name
+                if (IsPluginName(name))
                 {
-                    var children = elem.FindAllChildren();
-                    string state = CheckToggleState(elem);
+                    string toggleState = GetToggleState(elem);
                     
                     if (!plugins.ContainsKey(name))
                     {
-                        plugins[name] = state;
-                        Console.WriteLine($"\nPlugin: {name} - {state}");
-                        File.AppendAllText(logPath, $"\nPlugin: {name} - {state}\n");
-                        
-                        if (plugins.Count <= 5)
-                        {
-                            Console.WriteLine($"  Children count: {children.Count()}");
-                            File.AppendAllText(logPath, $"  Children count: {children.Count()}\n");
-                            int i = 0;
-                            foreach (var child in children)
-                            {
-                                i++;
-                                string childName = child.Name ?? "(empty)";
-                                // Use TryGetPattern API for FlaUI 5
-                                string toggleState = GetToggleStateTryGetPattern(child);
-                                Console.WriteLine($"    Child {i}: Name='{childName}', ToggleState={toggleState}");
-                                File.AppendAllText(logPath, $"    Child {i}: Name='{childName}', ToggleState={toggleState}\n");
-                            }
-                        }
+                        plugins[name] = toggleState;
+                        Console.WriteLine($"Plugin: {name} - {toggleState}");
+                        File.AppendAllText(logPath, $"Plugin: {name} - {toggleState}\n");
                     }
                 }
             }
-            catch { }
+            catch { /* Skip elements that cause errors */ }
         }
         
         Console.WriteLine($"\n=== Found {plugins.Count} Plugins ===");
         File.AppendAllText(logPath, $"\n=== Found {plugins.Count} Plugins ===\n");
+        
+        // Save results to file
+        SavePluginList(plugins);
     }
     
-    static string GetToggleStateTryGetPattern(dynamic elem)
+    /// <summary>
+    /// Detect toggle state (ON/OFF) for a plugin checkbox
+    /// Uses FlaUI 5.0.0 typed API for pattern access
+    /// </summary>
+    static string GetToggleState(AutomationElement elem)
     {
         try
         {
-            // Try to get TogglePattern using FlaUI 5 TryGetPattern API
-            var elemType = elem.GetType();
-            var method = elemType.GetMethod("TryGetPattern");
-            if (method != null)
+            // FlaUI 5.0.0 typed API: Use elem.Patterns.Toggle.PatternOrDefault
+            var togglePattern = elem.Patterns.Toggle.PatternOrDefault;
+            
+            if (togglePattern != null)
             {
-                var patternType = elemType.Assembly.GetType("FlaUI.Core.Patterns.ITogglePattern");
-                if (patternType != null)
-                {
-                    var patternInstance = Activator.CreateInstance(patternType);
-                    var parameters = new object[] { patternInstance };
-                    var result = method.Invoke(elem, parameters);
-                    
-                    if (result is bool && (bool)result)
-                    {
-                        var togglePattern = parameters[0];
-                        var currentProp = patternType.GetProperty("Current");
-                        if (currentProp != null)
-                        {
-                            var current = currentProp.GetValue(togglePattern);
-                            var toggleStateProp = current.GetType().GetProperty("ToggleState");
-                            if (toggleStateProp != null)
-                            {
-                                return toggleStateProp.GetValue(current).ToString();
-                            }
-                        }
-                    }
-                }
+                // Get ToggleState from the pattern
+                var toggleState = togglePattern.ToggleState;
+                var toggleStateValue = toggleState.Value;
+                
+                return toggleStateValue.ToString();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"    Error: {ex.GetType().Name}: {ex.Message}");
+        }
         
         return "Unknown";
     }
     
-    static string CheckToggleState(dynamic elem)
-    {
-        return GetToggleStateTryGetPattern(elem);
-    }
-    
-    static string CheckToggleStateRecursive(dynamic elem, int depth)
-    {
-        if (depth > 20) return "Unknown";
-        
-        string state = GetToggleStateTryGetPattern(elem);
-        if (state != "Unknown")
-            return state;
-        
-        try
-        {
-            var children = elem.FindAllChildren();
-            foreach (var child in children)
-            {
-                string result = CheckToggleStateRecursive(child, depth + 1);
-                if (result != "Unknown")
-                    return result;
-            }
-        }
-        catch { }
-        
-        return "Unknown";
-    }
-    
+    /// <summary>
+    /// Validate if text looks like a Vencord plugin name
+    /// Plugin names are PascalCase with letters, digits, and underscores
+    /// </summary>
     static bool IsPluginName(string text)
     {
         if (string.IsNullOrEmpty(text)) return false;
@@ -306,48 +441,44 @@ class Program
         }
         
         if (!hasLetter) return false;
-        if (text.Length < 5) return false;
-        if (text.Length > 40) return false;
+        if (text.Length < 3) return false; // Minimum length for plugin name
+        if (text.Length > 50) return false; // Maximum length
         
         return true;
     }
     
-    static void SavePluginList()
+    /// <summary>
+    /// Save plugin list to plugins_list.txt (sorted alphabetically)
+    /// </summary>
+    static void SavePluginList(System.Collections.Generic.Dictionary<string, string> plugins)
     {
-        string[] lines = File.ReadAllLines(logPath);
-        var plugins = new System.Collections.Generic.List<string>();
+        var sortedPlugins = plugins.ToList();
+        sortedPlugins.Sort((a, b) => a.Key.CompareTo(b.Key));
         
-        foreach (var line in lines)
-        {
-            if (line.StartsWith("Plugin: "))
-            {
-                plugins.Add(line.Substring(8).Trim());
-            }
-        }
-        
-        plugins.Sort();
         string pluginListPath = @"C:\Users\red\Desktop\DiscordAutomation\plugins_list.txt";
-        File.WriteAllText(pluginListPath, string.Join("\n", plugins));
+        var lines = sortedPlugins.Select(p => $"{p.Key} - {p.Value}");
         
-        Console.WriteLine($"\n=== Saved {plugins.Count} plugins to {pluginListPath} ===");
+        File.WriteAllLines(pluginListPath, lines);
+        
+        Console.WriteLine($"\n=== Saved {sortedPlugins.Count} plugins to {pluginListPath} ===");
+        File.AppendAllText(logPath, $"\n=== Saved {sortedPlugins.Count} plugins to {pluginListPath} ===\n");
     }
     
-    static void DumpUI(dynamic element, int maxDepth = -1, int currentDepth = 0)
+    /// <summary>
+    /// Recursively dump the UI element tree for debugging
+    /// </summary>
+    static void DumpUI(AutomationElement element, int maxDepth = -1, int currentDepth = 0)
     {
         if (maxDepth >= 0 && currentDepth > maxDepth) return;
         
-        var indent = new string(' ', currentDepth * 2);
-        string name = "(empty)";
-        string automationId = "(empty)";
-        string controlType = "(empty)";
+        string indent = new string(' ', currentDepth * 2);
+        string name = element.Name ?? "(empty)";
+        string automationId = element.AutomationId ?? "(empty)";
+        string controlType = element.ControlType.ToString() ?? "(empty)";
         
-        try { name = element.Name ?? "(empty)"; } catch { }
-        try { automationId = element.AutomationId ?? "(empty)"; } catch { }
-        try { controlType = element.ControlType?.ProgrammaticName ?? "(empty)"; } catch { }
+        string properties = GetAvailableProperties(element);
+        string line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\" Properties=\"{properties}\">";
         
-        var properties = GetAvailableProperties(element);
-        
-        var line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\" Properties=\"{properties}\">";
         Console.WriteLine(line);
         File.AppendAllText(logPath, line + "\n");
         
@@ -357,14 +488,21 @@ class Program
         }
     }
     
-    static string GetAvailableProperties(dynamic elem)
+    /// <summary>
+    /// Get all available properties from an AutomationElement for debugging
+    /// </summary>
+    static string GetAvailableProperties(AutomationElement elem)
     {
         var props = new System.Collections.Generic.List<string>();
         
         try
         {
             var type = elem.GetType();
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var fields = type.GetFields(
+                System.Reflection.BindingFlags.Public | 
+                System.Reflection.BindingFlags.NonPublic | 
+                System.Reflection.BindingFlags.Instance);
+            
             foreach (var field in fields)
             {
                 try

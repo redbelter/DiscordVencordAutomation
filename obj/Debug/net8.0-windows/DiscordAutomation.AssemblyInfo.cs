@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DiscordAutomation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+246b14ce0e8dfece5f5333990bcab0c899013d57")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dc9c516d52dc6e218f3b8637fc826b40f1bdb9ed")]
 [assembly: System.Reflection.AssemblyProductAttribute("DiscordAutomation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DiscordAutomation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

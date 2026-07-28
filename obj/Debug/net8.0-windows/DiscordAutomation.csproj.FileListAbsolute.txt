@@ -19,10 +19,10 @@ C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomatio
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.AssemblyInfoInputs.cache
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.AssemblyInfo.cs
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.csproj.CoreCompileInputs.cache
+C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.sourcelink.json
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordA.05CFF8FE.Up2Date
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.dll
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\refint\DiscordAutomation.dll
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.pdb
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.genruntimeconfig.cache
 C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\ref\DiscordAutomation.dll
-C:\Users\red\Desktop\DiscordAutomation\obj\Debug\net8.0-windows\DiscordAutomation.sourcelink.json

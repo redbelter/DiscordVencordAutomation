@@ -1,0 +1,40 @@
+{
+  "plugins": [
+    {
+      "name": "AccountPanelServerProfile",
+      "icon": "gear",
+      "status": "off",
+      "description": "Right click your account panel in the bottom left to view your profile in the current server."
+    },
+    {
+      "name": "AlwaysAnimate",
+      "icon": "information",
+      "status": "on",
+      "description": "Animates anything that can be animated"
+    },
+    {
+      "name": "AlwaysExpandRoles",
+      "icon": "gear",
+      "status": "on",
+      "description": "Always expands the role list in profile popouts"
+    },
+    {
+      "name": "AlwaysTrust",
+      "icon": "gear",
+      "status": "off",
+      "description": "Removes the annoying untrusted domain and suspicious file popup"
+    },
+    {
+      "name": "AnonymiseFileNames",
+      "icon": "gear",
+      "status": "on",
+      "description": "Anonymise uploaded file names"
+    },
+    {
+      "name": "AutoDNDWhilePlaying",
+      "icon": "gear",
+      "status": "off",
+      "description": "Automatically updates your online status (online, idle, dnd) when launching games"
+    }
+  ]
+}

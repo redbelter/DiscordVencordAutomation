@@ -1,7 +1,6 @@
 Accessibility - Unknown
 Account - Unknown
 AccountPanelServerProfile - Unknown
-Activity - Unknown
 AdriWonderland - Unknown
 Alphy - Unknown
 AlwaysAnimate - Unknown
@@ -10,6 +9,7 @@ AlwaysTrust - Unknown
 AnonymiseFileNames - Unknown
 Appearance - Unknown
 Arissaa - Unknown
+AshBurb - Unknown
 Aurora - Unknown
 AutoDNDWhilePlaying - Unknown
 Avatar - Unknown
@@ -36,7 +36,6 @@ Close - Unknown
 Cloud - Unknown
 ColorSighted - Unknown
 ConcatenatedComponentExtractor - Unknown
-Connections - Unknown
 ConsoleJanitor - Unknown
 ConsoleShortcuts - Unknown
 CopyEmojiMarkdown - Unknown
@@ -44,11 +43,12 @@ CopyFileContents - Unknown
 CopyStickerLinks - Unknown
 CopyUserURLs - Unknown
 CrashHandler - Unknown
+Crimm - Unknown
 CrummyBunny - Unknown
 CustomCommands - Unknown
 CustomIdle - Unknown
 CustomRPC - Unknown
-Deafen - Unknown
+Deafen - Off
 Dearrow - Unknown
 Decor - Unknown
 Developer - Unknown
@@ -58,11 +58,9 @@ DevTools - Unknown
 DisableCallIdle - Unknown
 Discover - Unknown
 DontRoundMyTimestamps - Unknown
-Eleanese - Unknown
 Experience - Unknown
 Experiments - Unknown
 ExpressionCloner - Unknown
-Eyedress - Unknown
 F8Break - Unknown
 FakeNitro - Unknown
 FakeProfileThemes - Unknown
@@ -79,9 +77,10 @@ FullSearchContext - Unknown
 FullUserInChatbox - Unknown
 GameActivityToggle - Unknown
 General - Unknown
-Ghost - Unknown
 GifPaste - Unknown
 GreetStickerPicker - Unknown
+Grimchi - Unknown
+Hannah - Unknown
 HideMedia - Unknown
 IgnoreActivities - Unknown
 ImageFilename - Unknown
@@ -91,9 +90,10 @@ Implicit - Unknown
 ImplicitRelationships - Unknown
 Inbox - Unknown
 IrcColors - Unknown
+Kaissi - Unknown
 KeepCurrentChannel - Unknown
+Kikioa - Unknown
 LoadingQuotes - Unknown
-Lobby - Unknown
 LovelyGhosty - Unknown
 Maximize - Unknown
 Maybe - Unknown
@@ -131,6 +131,8 @@ Online - Unknown
 OpenInApp - Unknown
 Other - Unknown
 OverrideForumDefaults - Unknown
+Overwatch - Unknown
+Palworld - Unknown
 PauseInvitesForever - Unknown
 PermissionFreeWill - Unknown
 PermissionsViewer - Unknown
@@ -151,6 +153,7 @@ ReplyTimestamp - Unknown
 RevealAllSpoilers - Unknown
 ReverseImageSearch - Unknown
 ReviewDB - Unknown
+Roblox - Unknown
 ROBLOX - Unknown
 RoleColorEverywhere - Unknown
 Search - Unknown
@@ -169,6 +172,8 @@ ShowTimeoutDuration - Unknown
 SilentMessageToggle - Unknown
 SilentTyping - Unknown
 SortFriendRequests - Unknown
+Spoiled - Unknown
+Spooky824 - Unknown
 SpotifyControls - Unknown
 SpotifyCrack - Unknown
 SpotifyShareCommands - Unknown
@@ -181,9 +186,11 @@ SuperReactionTweaks - Unknown
 SupportHelper - Unknown
 System - Unknown
 TenorGifSearch - Unknown
+Terraria - Unknown
 TextReplace - Unknown
 ThemeAttributes - Unknown
 Themes - Unknown
+Thiccie_C - Unknown
 Translate - Unknown
 Twitch - Unknown
 TypingIndicator - Unknown
@@ -197,7 +204,6 @@ UserVoiceShow - Unknown
 USRBG - Unknown
 ValidReply - Unknown
 ValidUser - Unknown
-Valorant - Unknown
 VALORANT - Unknown
 VcNarrator - Unknown
 Vencord - Unknown
@@ -208,7 +214,8 @@ VoiceChatDoubleClick - Unknown
 VoiceDownload - Unknown
 VoiceMessages - Unknown
 VolumeBooster - Unknown
-Warframe - Unknown
+Warlord2324 - Unknown
 WhoReacted - Unknown
 XSOverlay - Unknown
 YoutubeAdblock - Unknown
+Zenith - Unknown

@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v8.0": {
       "DiscordAutomation/1.0.0": {
         "dependencies": {
+          "FlaUI.Core": "5.0.0",
           "FlaUI.UIA3": "5.0.0"
         },
         "runtime": {
