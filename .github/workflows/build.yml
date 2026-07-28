@@ -34,10 +34,10 @@ jobs:
         DOTNET_CLI_TELEMETRY_OPTOUT: true
         DOTNET_NOLOGO: true
 
-    - name: Copy all files to publish folder
+    - name: Copy all project files to publish folder
       run: |
-        Copy-Item -Path "*.txt, *.xml, *.json" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "*.exe" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "*.txt, *.xml, *.json, *.md" -Destination "./publish/" -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "*.exe" -Destination "./publish/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "bin/Release/net8.0-windows/*" -Destination "./publish/" -Recurse -Force -ErrorAction SilentlyContinue
 
     - name: Create ZIP Archive
