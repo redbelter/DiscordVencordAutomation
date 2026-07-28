@@ -10,11 +10,11 @@ using FlaUI.UIA3;
 /// Discord Vencord Plugin Automation Tool
 /// 
 /// This tool automates the process of:
-/// 1. Launching Discord with proper retry logic (3 attempts, 60 seconds each)
+/// 1. Waiting for Discord to be running (with 60-second timeout)
 /// 2. Navigating to Settings → Plugins page
 /// 3. Enumerating Vencord plugins and their toggle states
-/// 4. Saving results to plugins_list.txt
-///
+/// 4. Cleaning up Discord processes after completion
+/// 
 /// Usage: Run as a standalone console application
 /// Output: 
 ///   - flaui_output.txt: Detailed UI automation log
@@ -45,26 +45,23 @@ class Program
             File.WriteAllText(logPath, "=== Discord Vencord Plugin Automation (FlaUI) ===\n");
             Console.WriteLine("File created!");
             
-            // Step 1: Kill all existing Discord processes
+            // Step 1: Kill all existing Discord processes (cleanup from previous runs)
             KillAllDiscordProcesses();
             
-            // Step 2: Launch Discord
-            var discordProcess = LaunchDiscord();
-            if (discordProcess == null)
+            // Step 2: Wait for Discord to be running (with 60-second timeout)
+            if (!WaitForDiscordRun())
             {
-                Console.WriteLine("Failed to launch Discord!");
+                Console.WriteLine("Failed to find Discord within 60 seconds");
                 return;
             }
             
-            // Step 3: Wait for Discord to load (with retry logic)
-            if (!WaitForDiscordLoad())
-            {
-                Console.WriteLine("Failed to load Discord after 3 attempts");
-                return;
-            }
-            
-            // Step 4: Navigate to Plugins page and enumerate plugins
+            // Step 3: Navigate to Plugins page and enumerate plugins
             NavigateToPluginsAndEnumerate();
+            
+            // Step 4: Clean up - kill Discord after we're done
+            Console.WriteLine("Automation complete, cleaning up...");
+            File.AppendAllText(logPath, "Automation complete, cleaning up...\n");
+            KillAllDiscordProcesses();
         }
         catch (Exception ex)
         {
@@ -100,148 +97,49 @@ class Program
     }
     
     /// <summary>
-    /// Launch Discord from the latest app folder
+    /// Wait for Discord to be running with timeout (60 seconds)
+    /// Does NOT launch Discord - just waits for it to be present
     /// </summary>
-    static Process LaunchDiscord()
+    static bool WaitForDiscordRun()
     {
-        Console.WriteLine("Launching Discord...");
-        File.AppendAllText(logPath, "Launching Discord...\n");
+        Console.WriteLine("Waiting for Discord to be running...");
+        File.AppendAllText(logPath, "Waiting for Discord to be running...\n");
         
-        string discordPath = @"C:\Users\red\AppData\Local\Discord";
-        string discordExe = Path.Combine(discordPath, "Discord.exe");
-        
-        // Find latest app folder if not at default location
-        if (!File.Exists(discordExe))
-        {
-            var appFolders = Directory.GetDirectories(discordPath).Where(d => d.Contains("app-")).ToArray();
-            if (appFolders.Length > 0)
-            {
-                discordExe = Path.Combine(appFolders[0], "Discord.exe");
-                Console.WriteLine($"Using app folder path: {discordExe}");
-                File.AppendAllText(logPath, $"Using app folder path: {discordExe}\n");
-            }
-        }
-        
-        if (!File.Exists(discordExe))
-        {
-            Console.WriteLine($"Discord.exe not found at {discordExe}");
-            File.AppendAllText(logPath, $"Discord.exe not found at {discordExe}\n");
-            return null;
-        }
-        
-        var process = Process.Start(new ProcessStartInfo { 
-            FileName = discordExe, 
-            UseShellExecute = true 
-        });
-        
-        if (process == null)
-        {
-            Console.WriteLine("Failed to start Discord!");
-            File.AppendAllText(logPath, "Failed to start Discord!\n");
-            return null;
-        }
-        
-        Console.WriteLine($"Discord started with PID {process.Id}");
-        File.AppendAllText(logPath, $"Discord started with PID {process.Id}\n");
-        return process;
-    }
-    
-    /// <summary>
-    /// Wait for Discord to fully load with retry logic
-    /// Max 3 attempts, 60 seconds (120 × 500ms) per attempt
-    /// </summary>
-    static bool WaitForDiscordLoad()
-    {
-        Console.WriteLine("Waiting for Discord main window...");
-        File.AppendAllText(logPath, "Waiting for Discord main window...\n");
-        
-        int launchAttempts = 0;
-        const int maxAttempts = 3;
         const int maxWaitCycles = 120; // 120 × 500ms = 60 seconds
         const int waitIntervalMs = 500;
         
-        while (launchAttempts < maxAttempts)
+        for (int i = 0; i < maxWaitCycles; i++)
         {
-            launchAttempts++;
-            
-            if (launchAttempts > 1)
+            try
             {
-                Console.WriteLine($"Retry attempt {launchAttempts} for Discord...");
-                File.AppendAllText(logPath, $"Retry attempt {launchAttempts} for Discord...\n");
+                var discordProcs = Process.GetProcessesByName("Discord")
+                    .Where(p => p.Id != Environment.ProcessId)
+                    .ToArray();
                 
-                // Kill existing processes before retry
-                foreach (var proc in Process.GetProcessesByName("Discord"))
+                if (discordProcs.Length > 0)
                 {
-                    Console.WriteLine($"  Killing PID {proc.Id}");
-                    File.AppendAllText(logPath, $"  Killing PID {proc.Id}\n");
-                    try { proc.Kill(); proc.WaitForExit(5000); }
-                    catch (Exception ex) { Console.WriteLine($"    Error: {ex.Message}"); File.AppendAllText(logPath, $"    Error: {ex.Message}\n"); }
-                }
-                System.Threading.Thread.Sleep(1000);
-                
-                // Relaunch Discord
-                var retryProcess = LaunchDiscord();
-                if (retryProcess == null) continue;
-            }
-            
-            // Wait for Discord main window with timeout
-            for (int i = 0; i < maxWaitCycles; i++)
-            {
-                try
-                {
-                    if (!Process.GetProcessesByName("Discord").Any())
-                    {
-                        Console.WriteLine("Discord exited unexpectedly");
-                        File.AppendAllText(logPath, "Discord exited unexpectedly\n");
-                        break;
-                    }
-                    
-                    var automation = new UIA3Automation();
-                    var discordProcs = Process.GetProcessesByName("Discord")
-                        .Where(p => p.Id != Environment.ProcessId)
-                        .ToArray();
-                    
-                    if (discordProcs.Length > 0)
-                    {
-                        var app = FlaUI.Core.Application.Attach(discordProcs[0].Id);
-                        var window = app.GetMainWindow(automation);
-                        
-                        if (window != null)
-                        {
-                            Console.WriteLine($"Found window: '{window.Name}' | '{window.ControlType}'");
-                            File.AppendAllText(logPath, $"Found window: '{window.Name}' | '{window.ControlType}'\n");
-                            
-                            // Check if it's the main Discord window (not Updater)
-                            if (window.Name.Contains("Discord") && !window.Name.Contains("Updater"))
-                            {
-                                Console.WriteLine($"Discord loaded! Window: {window.Name}");
-                                File.AppendAllText(logPath, $"Discord loaded! Window: {window.Name}\n");
-                                return true;
-                            }
-                        }
-                    }
-                    
-                    Console.WriteLine($"Waiting for Discord main window... (attempt {i})");
-                    File.AppendAllText(logPath, $"Waiting for Discord main window... (attempt {i})\n");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Exception: {ex.Message}");
-                    File.AppendAllText(logPath, $"Exception: {ex.Message}\n");
+                    Console.WriteLine($"Discord found with {discordProcs.Length} process(es)");
+                    File.AppendAllText(logPath, $"Discord found with {discordProcs.Length} process(es)\n");
+                    return true;
                 }
                 
-                System.Threading.Thread.Sleep(waitIntervalMs);
+                if (i % 10 == 0)
+                {
+                    Console.WriteLine($"Waiting for Discord... (attempt {i})");
+                    File.AppendAllText(logPath, $"Waiting for Discord... (attempt {i})\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                File.AppendAllText(logPath, $"Exception: {ex.Message}\n");
             }
             
-            if (launchAttempts < maxAttempts)
-            {
-                Console.WriteLine("Discord did not load within timeout, restarting...");
-                File.AppendAllText(logPath, "Discord did not load within timeout, restarting...\n");
-            }
+            System.Threading.Thread.Sleep(waitIntervalMs);
         }
         
-        Console.WriteLine("Timeout waiting for Discord main window after 3 attempts");
-        File.AppendAllText(logPath, "Timeout waiting for Discord main window after 3 attempts\n");
+        Console.WriteLine("Timeout waiting for Discord after 60 seconds");
+        File.AppendAllText(logPath, "Timeout waiting for Discord after 60 seconds\n");
         return false;
     }
     
@@ -473,8 +371,10 @@ class Program
         
         string indent = new string(' ', currentDepth * 2);
         string name = element.Name ?? "(empty)";
-        string automationId = element.AutomationId ?? "(empty)";
-        string controlType = element.ControlType.ToString() ?? "(empty)";
+        string automationId = "(not supported)";
+        try { automationId = element.AutomationId ?? "(empty)"; } catch { }
+        string controlType = "(not supported)";
+        try { controlType = element.ControlType.ToString(); } catch { }
         
         string properties = GetAvailableProperties(element);
         string line = $"{indent}<Element Name=\"{name}\" AutomationId=\"{automationId}\" ControlType=\"{controlType}\" Properties=\"{properties}\">";
