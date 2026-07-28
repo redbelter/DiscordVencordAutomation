@@ -1,11 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>DiscordAutomation</AssemblyName>
+    <RootNamespace>DiscordAutomation</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include=" FlaUI.UIA3" Version="5.0.0" />
     <PackageReference Include="FlaUI.Core" Version="5.0.0" />
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
   </ItemGroup>
+
+  <Target Name="CopyPublishFiles" AfterTargets="Publish">
+    <Copy SourceFiles="$(OutputPath)DiscordAutomation.exe" DestinationFolder="$(OutDir)publish\" />
+    <Copy SourceFiles="$(OutputPath)DiscordAutomation.dll" DestinationFolder="$(OutDir)publish\" />
+    <Copy SourceFiles="$(OutputPath)DiscordAutomation.deps.json" DestinationFolder="$(OutDir)publish\" />
+    <Copy SourceFiles="$(OutputPath)DiscordAutomation.runtimeconfig.json" DestinationFolder="$(OutDir)publish\" />
+  </Target>
+
 </Project>

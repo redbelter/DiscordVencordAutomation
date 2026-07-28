@@ -81,3 +81,34 @@ When running this tool:
 - Toggle detection may return "Unknown" for Discord's own UI elements (not Vencord plugins)
 - Requires Discord to be running in interactive session (not background/daemon mode)
 - WebView2/WebView elements may not fully expose UIA toggle patterns
+
+## Running as a Scheduled Task
+
+The tool is set up as a scheduled task on the target machine:
+- **Task name:** `\DiscordAutomation`
+- **Triggers:** Scheduled to run at configured intervals
+- **Run with highest privileges:** Yes (requires admin for UI automation)
+
+### For AI Assistants - Running the Scheduled Task:
+
+```powershell
+# Run the task manually
+schtasks /run /tn "\DiscordAutomation"
+
+# Check task status
+schtasks /query /tn "\DiscordAutomation" /fo LIST
+
+# View task XML for reference
+schtasks /query /tn "\DiscordAutomation" /xml
+```
+
+### Triggering via GitHub Actions:
+
+```yaml
+- name: Trigger Discord Automation
+  run: schtasks /run /tn "\DiscordAutomation"
+```
+
+### Expected Output Files:
+- `C:\Users\red\Desktop\DiscordAutomation\plugins_list.txt` - Plugin list with status
+- `C:\Users\red\Desktop\DiscordAutomation\flaui_output.txt` - Detailed automation log

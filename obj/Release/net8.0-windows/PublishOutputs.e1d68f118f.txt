@@ -1,0 +1,16 @@
+C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.exe
+C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.deps.json
+C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.runtimeconfig.json
+C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.pdb
+C:\Users\red\Desktop\DiscordAutomation\publish\FlaUI.Core.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\FlaUI.UIA3.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\Interop.UIAutomationClient.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\System.Configuration.ConfigurationManager.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\System.Diagnostics.EventLog.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\System.Diagnostics.PerformanceCounter.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\System.Drawing.Common.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\System.Management.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\runtimes\win\lib\net8.0\System.Diagnostics.EventLog.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\runtimes\win\lib\net8.0\System.Diagnostics.PerformanceCounter.dll
+C:\Users\red\Desktop\DiscordAutomation\publish\runtimes\win\lib\net8.0\System.Management.dll

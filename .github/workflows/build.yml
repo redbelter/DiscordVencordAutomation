@@ -1,0 +1,76 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: true
+        DOTNET_NOLOGO: true
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: publish/*.exe
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## Discord Vencord Plugin Automation v${{ github.ref_name }}
+          
+          ### Installation
+          1. Download `DiscordAutomation.exe` below
+          2. Run directly or use `dotnet DiscordAutomation.exe`
+          
+          ### Requirements
+          - Windows 10/11
+          - .NET 8.0 Runtime (included in Windows 10/11)
+          - Discord installed at `C:\Users\red\AppData\Local\Discord`
+          
+          ### Usage
+          ```bash
+          cd C:\Users\red\Desktop\DiscordAutomation
+          dotnet run
+          ```
+          
+          ### Output Files
+          - `plugins_list.txt` - List of detected plugins with status (on/off/unknown)
+          - `flaui_output.txt` - Detailed UI automation log for debugging
+          
+          ### Toggle State Detection
+          Uses FlaUI 5.0.0 typed API:
+          ```csharp
+          var togglePattern = elem.Patterns.Toggle.PatternOrDefault;
+          if (togglePattern != null) {
+              var toggleState = togglePattern.ToggleState;
+              return toggleState.Value.ToString();
+          }
+          ```
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
