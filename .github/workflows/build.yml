@@ -34,17 +34,22 @@ jobs:
         DOTNET_CLI_TELEMETRY_OPTOUT: true
         DOTNET_NOLOGO: true
 
+    - name: Create ZIP Archive
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./DiscordAutomation.zip -Force
+
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v1
       with:
-        files: publish/*.exe
+        files: DiscordAutomation.zip
         name: Release ${{ github.ref_name }}
         body: |
           ## Discord Vencord Plugin Automation v${{ github.ref_name }}
           
           ### Installation
-          1. Download `DiscordAutomation.exe` below
-          2. Run directly or use `dotnet DiscordAutomation.exe`
+          1. Download `DiscordAutomation.zip` below
+          2. Extract to `C:\Users\red\Desktop\DiscordAutomation\`
+          3. Run `DiscordAutomation.exe` or `dotnet DiscordAutomation.dll`
           
           ### Requirements
           - Windows 10/11
@@ -54,7 +59,7 @@ jobs:
           ### Usage
           ```bash
           cd C:\Users\red\Desktop\DiscordAutomation
-          dotnet run
+          DiscordAutomation.exe
           ```
           
           ### Output Files
