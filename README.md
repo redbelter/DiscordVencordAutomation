@@ -110,5 +110,14 @@ schtasks /query /tn "\DiscordAutomation" /xml
 ```
 
 ### Expected Output Files:
-- `C:\Users\red\Desktop\DiscordAutomation\plugins_list.txt` - Plugin list with status
-- `C:\Users\red\Desktop\DiscordAutomation\flaui_output.txt` - Detailed automation log
+- `plugins_list.txt` - Plugin list with status
+- `flaui_output.txt` - Detailed automation log
+
+## Running the Compiled Release
+
+Download the latest release from GitHub and extract to `C:\Users\red\Desktop\DiscordAutomation\`:
+
+```bash
+cd C:\Users\red\Desktop\DiscordAutomation
+DiscordAutomation.exe
+```
