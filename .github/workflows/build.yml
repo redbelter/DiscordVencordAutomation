@@ -54,16 +54,16 @@ jobs:
           
           ### Installation
           1. Download `DiscordAutomation.zip` below
-          2. Extract to `C:\Users\red\Desktop\DiscordAutomation\`
+          2. Extract to the target directory
           3. Run `DiscordAutomation.exe`
           
           ### Requirements
           - Windows 10/11
-          - Discord installed at `C:\Users\red\AppData\Local\Discord`
+          - Discord installed
           
           ### Usage
           ```bash
-          cd C:\Users\red\Desktop\DiscordAutomation
+          cd DiscordAutomation
           DiscordAutomation.exe
           ```
           
