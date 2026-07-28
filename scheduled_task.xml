@@ -28,7 +28,7 @@
   </Triggers>
   <Actions Context="Author">
     <Exec>
-      <Command>C:\Users\red\Desktop\DiscordAutomation\bin\Debug\net8.0-windows\DiscordAutomation.exe</Command>
+      <Command>C:\Users\red\Desktop\DiscordAutomation\publish\DiscordAutomation.exe</Command>
     </Exec>
   </Actions>
 </Task>
